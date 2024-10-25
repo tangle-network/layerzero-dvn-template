@@ -1,5 +1,5 @@
 {
-  "name": "layerzero-dvn-template",
+  "name": "layerzero-dvn-blueprint-template",
   "version": "1.0.0",
   "description": "A Tangle Blueprint for LayerZero DVNs",
   "main": "index.js",

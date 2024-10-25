@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "name": "layerzero-dvn-template",
+    "name": "layerzero-dvn-blueprint-template",
     "description": "A Tangle Blueprint specifying a LayerZero Decentralized Verifier Network (DVN)",
-    "author": "Drew Stone <drewstone329@gmail.com>",
+    "author": "Tangle <drew@tangle.tools>",
     "category": null,
-    "code_repository": "https://github.com/tangle-network/layerzero-dvn-template",
+    "code_repository": "https://github.com/tangle-network/layerzero-dvn-blueprint-template",
     "logo": null,
     "website": "https://tangle.tools",
     "license": "Unlicense"
@@ -20,7 +20,7 @@
         {
           "fetcher": {
             "Testing": {
-              "cargo_package": "layerzero-dvn-template",
+              "cargo_package": "layerzero-dvn-blueprint-template",
               "cargo_bin": "main",
               "base_path": "/Users/drew/webb/layerzero-dvn-template"
             }

@@ -4245,7 +4245,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "layerzero-dvn-template"
+name = "layerzero-dvn-blueprint-template"
 version = "0.1.0"
 dependencies = [
  "alloy-consensus 0.1.4",
