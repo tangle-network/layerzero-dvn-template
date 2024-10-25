@@ -1,0 +1,21 @@
+[profile.default]
+src = "contracts/src"
+test = "contracts/test"
+out = "contracts/out"
+script = "contracts/script"
+cache_path = "contracts/cache"
+broadcast = "contracts/broadcast"
+libs = ["contracts/lib"]
+solc_version = "0.8.20"
+
+remappings = [
+    "@uniswap/v3-core/=contracts/lib/tnt-core/lib/uniswap-v3-core/contracts/",
+    "@lz/=contracts/lib/LayerZero-v2/packages/layerzero-v2/evm/",
+    "@layerzerolabs/lz-evm-messagelib-v2/=node_modules/@layerzerolabs/lz-evm-messagelib-v2/",
+    "@layerzerolabs/lz-evm-protocol-v2/=node_modules/@layerzerolabs/lz-evm-protocol-v2/",
+    "@layerzerolabs/lz-evm-v1-0.7/=node_modules/@layerzerolabs/lz-evm-v1-0.7/",
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "core/=contracts/lib/tnt-core/src/",
+    "forge-std/=contracts/lib/forge-std/src/",
+    "tnt-core/=contracts/lib/tnt-core/src/"
+]
