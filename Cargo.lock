@@ -4249,7 +4249,7 @@ name = "layerzero-dvn-template"
 version = "0.1.0"
 dependencies = [
  "alloy-consensus 0.1.4",
- "alloy-contract 0.1.4",
+ "alloy-contract 0.2.1",
  "alloy-json-abi",
  "alloy-network 0.1.4",
  "alloy-primitives",
@@ -5483,7 +5483,7 @@ checksum = "4e69bf016dc406eff7d53a7d3f7cf1c2e72c82b9088aac1118591e36dd2cd3e9"
 dependencies = [
  "bitcoin_hashes 0.13.0",
  "rand",
- "rand_core 0.6.4",
+ "rand_core 0.5.1",
  "serde",
  "unicode-normalization",
 ]
