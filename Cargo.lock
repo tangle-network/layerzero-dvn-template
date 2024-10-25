@@ -4254,7 +4254,7 @@ dependencies = [
  "alloy-network 0.1.4",
  "alloy-primitives",
  "alloy-provider 0.1.4",
- "alloy-pubsub 0.1.4",
+ "alloy-pubsub 0.2.1",
  "alloy-rpc-types 0.1.4",
  "alloy-rpc-types-eth 0.1.4",
  "alloy-signer 0.1.4",
@@ -5483,7 +5483,7 @@ checksum = "4e69bf016dc406eff7d53a7d3f7cf1c2e72c82b9088aac1118591e36dd2cd3e9"
 dependencies = [
  "bitcoin_hashes 0.13.0",
  "rand",
- "rand_core 0.6.4",
+ "rand_core 0.5.1",
  "serde",
  "unicode-normalization",
 ]
