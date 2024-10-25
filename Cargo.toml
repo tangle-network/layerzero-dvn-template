@@ -23,7 +23,7 @@ alloy-primitives = "0.7.2"
 alloy-json-abi = "0.7.2"
 alloy-sol-types = "0.7.2"
 alloy-rpc-types = { version = "0.1" }
-alloy-rpc-types-eth = { version = "0.1" }
+alloy-rpc-types-eth = { version = "0.2" }
 alloy-provider = { version = "0.1", default-features = false, features = ["reqwest", "ws"] }
 alloy-pubsub = { version = "0.1" }
 alloy-signer = { version = "0.1" }
