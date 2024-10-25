@@ -1,6 +1,6 @@
 use color_eyre::Result;
 use gadget_sdk as sdk;
-use layerzero_dvn_template as blueprint;
+use layerzero_dvn_blueprint_template as blueprint;
 use sdk::{
     config::ContextConfig, events_watcher::substrate::SubstrateEventWatcher,
     events_watcher::tangle::TangleEventsWatcher, tangle_subxt::*,
