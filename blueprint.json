@@ -9,10 +9,30 @@
     "website": "https://tangle.tools",
     "license": "Unlicense"
   },
-  "jobs": [],
-  "registration_hook": "None",
+  "manager": {
+    "Evm": ""
+  },
+  "jobs": [
+    {
+      "metadata": {
+        "name": "handle_packet_sent",
+        "description": null
+      },
+      "params": [
+        {
+          "Struct": [
+            "Packet",
+            []
+          ]
+        },
+        "Bytes"
+      ],
+      "result": [
+        "Uint32"
+      ]
+    }
+  ],
   "registration_params": [],
-  "request_hook": "None",
   "request_params": [],
   "gadget": {
     "Native": {
