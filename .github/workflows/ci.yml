@@ -40,10 +40,14 @@ jobs:
         run: yarn install
 
       # Now run Foundry checks
-      - name: Run Foundry Build and Tests
+      - name: Run Foundry Build
         run: |
           forge --version
           forge build --sizes
+
+      - name: Run Foundry Tests
+        if: hashFiles('contracts/test/**/*.sol') != ''
+        run: |
           forge test -vvv
 
       # Generate and verify blueprint
