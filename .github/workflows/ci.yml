@@ -13,49 +13,20 @@ env:
   PROJECT_NAME: blueprint-template
 
 jobs:
-  foundry-check:
-    name: Foundry project
+  verify-blueprint:
+    name: Verify Blueprint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      # Setup all toolchains
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
 
-      - name: Run Forge build
-        run: |
-          forge --version
-          forge build --sizes
-        id: build
-
-      - name: Run Forge tests
-        run: |
-          forge test -vvv
-        id: test
-
-  verify-template:
-    needs: foundry-check  # This ensures foundry-check runs first
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      
-      - uses: JohnPeel/cargo-generate-action@main
-        with:
-          name: ${{ env.PROJECT_NAME }}
-          arguments: >
-            --define gh-username="webb-tools"
-            --define project-description="An example blueprint"
-            --define project-homepage="https://webb.tools"
-            --define flakes=true
-            --define docker=true
-            --define base-image="rustlang/rust:nightly"
-      
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
@@ -63,17 +34,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
 
-      - name: Build Blueprint
+      # Install yarn dependencies first
+      - name: Install Yarn Dependencies
+        run: yarn install
+
+      # Now run Foundry checks
+      - name: Run Foundry Build and Tests
         run: |
-          cp -r $PROJECT_NAME ${{ runner.temp }}/
-          cd ${{ runner.temp }}/$PROJECT_NAME
-          yarn install
-          cargo check
           forge --version
           forge build --sizes
+          forge test -vvv
+
+      # Generate and verify blueprint
+      - name: Generate and Test Blueprint
+        run: |
+          # Generate blueprint from template
+          cargo generate --path . \
+            --name ${{ env.PROJECT_NAME }} \
+            --define gh-username="tangle-network" \
+            --define project-description="A LayerZero DVN blueprint" \
+            --define project-homepage="https://tangle.tools" \
+            --define flakes=true \
+            --define docker=true \
+            --define base-image="rustlang/rust:nightly"
+
+          # Copy to temp directory and test
+          cp -r $PROJECT_NAME ${{ runner.temp }}/
+          cd ${{ runner.temp }}/$PROJECT_NAME
+          cargo check
