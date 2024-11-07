@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [ 'main' ]
+    paths-ignore:
+      - "**.md"
+
+env:
+  FOUNDRY_PROFILE: ci
+  PROJECT_NAME: blueprint-template
+
+jobs:
+  foundry-check:
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          forge test -vvv
+        id: test
+
+  verify-template:
+    needs: foundry-check  # This ensures foundry-check runs first
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - uses: JohnPeel/cargo-generate-action@main
+        with:
+          name: ${{ env.PROJECT_NAME }}
+          arguments: >
+            --define gh-username="webb-tools"
+            --define project-description="An example blueprint"
+            --define project-homepage="https://webb.tools"
+            --define flakes=true
+            --define docker=true
+            --define base-image="rustlang/rust:nightly"
+      
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Build Blueprint
+        run: |
+          cp -r $PROJECT_NAME ${{ runner.temp }}/
+          cd ${{ runner.temp }}/$PROJECT_NAME
+          yarn install
+          cargo check
+          forge --version
+          forge build --sizes
