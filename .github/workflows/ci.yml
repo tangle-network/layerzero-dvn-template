@@ -53,17 +53,9 @@ jobs:
       # Generate and verify blueprint
       - name: Generate and Test Blueprint
         run: |
-          # Generate blueprint from template
-          cargo generate --path . \
-            --name ${{ env.PROJECT_NAME }} \
-            --define gh-username="tangle-network" \
-            --define project-description="A LayerZero DVN blueprint" \
-            --define project-homepage="https://tangle.tools" \
-            --define flakes=true \
-            --define docker=true \
-            --define base-image="rustlang/rust:nightly"
-
           # Copy to temp directory and test
           cp -r $PROJECT_NAME ${{ runner.temp }}/
           cd ${{ runner.temp }}/$PROJECT_NAME
           cargo check
+          cargo build
+          cargo test
