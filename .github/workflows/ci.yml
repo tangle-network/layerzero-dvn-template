@@ -10,7 +10,6 @@ on:
 
 env:
   FOUNDRY_PROFILE: ci
-  PROJECT_NAME: layerzero-dvn-template
 
 jobs:
   verify-blueprint:
