@@ -10,7 +10,7 @@ on:
 
 env:
   FOUNDRY_PROFILE: ci
-  PROJECT_NAME: blueprint-template
+  PROJECT_NAME: layerzero-dvn-template
 
 jobs:
   verify-blueprint:
@@ -50,12 +50,8 @@ jobs:
         run: |
           forge test -vvv
 
-      # Generate and verify blueprint
-      - name: Generate and Test Blueprint
+      - name: Check and Test Blueprint
         run: |
-          # Copy to temp directory and test
-          cp -r $PROJECT_NAME ${{ runner.temp }}/
-          cd ${{ runner.temp }}/$PROJECT_NAME
           cargo check
           cargo build
           cargo test
