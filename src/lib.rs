@@ -39,4 +39,4 @@ load_abi!(
 load_abi!(
     ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING
     "contracts/out/SendUlnBase.sol/SendUlnBase.json"
-)
+);
