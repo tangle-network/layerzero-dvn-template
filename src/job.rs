@@ -1,4 +1,4 @@
-use crate::SendUlnBase::{self, AssignJobCall, DVNFeePaid};
+use crate::SendUln302::{self, DVNFeePaid};
 use crate::{
     security::{SecurityType, SecurityVerifier, VerificationContext},
     ILayerZeroDVN::{self, DVNFeePaid},
@@ -78,7 +78,7 @@ pub async fn store_packet(packet: Packet, options: Bytes, ctx: DvnContext) -> Re
     params(fee_paid, log),
     event_listener(
         listener = EvmContractEventListener<DVNFeePaid>
-        instance = SendUlnBase,
+        instance = SendUln302,
         abi = ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING,
         pre_processor = convert_fee_event,
     )
