@@ -1,5 +1,5 @@
-use alloy_sol_types::sol;
-use gadget_sdk::load_abi;
+use blueprint_sdk::alloy::sol_types::sol;
+use blueprint_sdk::macros::load_abi;
 use serde::{Deserialize, Serialize};
 
 mod job;

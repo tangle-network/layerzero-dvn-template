@@ -12,6 +12,7 @@ pub use zk_proof::ZkProofVerifier;
 
 use alloy_primitives::{Address, Bytes};
 use async_trait::async_trait;
+use serde::{Serialize, Deserialize};
 use gadget_sdk::Error;
 
 /// Type of security verification this DVN performs

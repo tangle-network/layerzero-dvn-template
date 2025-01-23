@@ -13,35 +13,12 @@ keywords = ["tangle", "blueprint", "avs"]
 rust-version = "1.81"
 
 [dependencies]
-tracing = "0.1"
-async-trait = "0.1"
+blueprint-sdk = { path = "../gadget/crates/sdk", features = ["tangle", "evm", "macros", "local-store"] }
 color-eyre = "0.6"
-structopt = "0.3.26"
-tokio = { version = "1.39", default-features = false, features = ["full"] }
-tracing-subscriber = { version = "0.3", features = ["parking_lot", "env-filter"] }
-alloy-primitives = "0.7.2"
-alloy-json-abi = { version = "0.7.2", features = ["serde_json"] }
-alloy-sol-types = { version = "0.7.2", features = ["json"] }
-alloy-rpc-types = { version = "0.1" }
-alloy-rpc-types-eth = { version = "0.1" }
-alloy-provider = { version = "0.1", default-features = false, features = ["reqwest", "ws"] }
-alloy-pubsub = { version = "0.1" }
-alloy-signer = { version = "0.1" }
-alloy-signer-local = { version = "0.1" }
-alloy-network = { version = "0.1" }
-alloy-contract = { version = "0.1" }
-alloy-consensus = { version = "0.1" }
-alloy-transport = { version = "0.1" }
-alloy-transport-http = { version = "0.1" }
 serde = "1.0.213"
 
-[dependencies.gadget-sdk]
-version = "0.6.2"
-default-features = false
-features = ["std", "getrandom"]
-
 [build-dependencies]
-blueprint-metadata = "0.2.0"
+blueprint-sdk = { path = "../gadget/crates/sdk", features = ["build"] }
 
 [lib]
 path = "src/lib.rs"

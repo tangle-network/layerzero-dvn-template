@@ -10,14 +10,15 @@ use alloy_primitives::keccak256;
 use alloy_primitives::{Address, Bytes, U256};
 use alloy_sol_types::sol;
 use alloy_sol_types::SolType;
-use gadget_sdk::contexts::{EVMProviderContext, KeystoreContext, TangleClientContext};
-use gadget_sdk::store::LocalDatabase;
-use gadget_sdk::{
-    config::StdGadgetConfiguration, event_listener::evm::contracts::EvmContractEventListener, job,
-    Error,
-};
+use blueprint_sdk::macros::contexts::{EVMProviderContext, KeystoreContext, TangleClientContext};
+use blueprint_sdk::config::GadgetConfiguration;
+use blueprint_sdk::event_listeners::evm::EvmContractEventListener;
+use blueprint_sdk::job;
+use blueprint_sdk::tokio;
+use blueprint_sdk::alloy::rpc::types as alloy_rpc_types;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
+use blueprint_sdk::stores::local_database::LocalDatabase;
 use tokio::time::{sleep, Duration};
 
 /// Stored packet information
@@ -31,7 +32,7 @@ struct StoredPacket {
 #[derive(Debug, Clone, KeystoreContext, TangleClientContext, EVMProviderContext)]
 pub struct DvnContext {
     #[config]
-    pub config: StdGadgetConfiguration,
+    pub config: GadgetConfiguration,
     #[call_id]
     pub call_id: Option<u64>,
     pub store: LocalDatabase<StoredPacket>,
@@ -85,7 +86,7 @@ pub async fn store_packet(packet: Packet, options: Bytes, ctx: DvnContext) -> Re
 )]
 pub async fn process_packet(
     fee_paid: DVNFeePaid,
-    log: gadget_sdk::alloy_rpc_types::Log,
+    log: alloy_rpc_types::Log,
     ctx: DvnContext,
 ) -> Result<bool, Error> {
     // 1. Check if we're one of the selected DVNs
@@ -151,7 +152,7 @@ pub async fn process_packet(
 }
 
 async fn convert_packet_event(
-    event: (PacketSent, gadget_sdk::alloy_rpc_types::Log),
+    event: (PacketSent, alloy_rpc_types::Log),
 ) -> Result<(Packet, Bytes), Error> {
     let packet_sent = event.0;
     let packet = Packet::abi_decode(&packet_sent.encodedPayload.to_vec()[..], true)
@@ -160,8 +161,8 @@ async fn convert_packet_event(
 }
 
 async fn convert_fee_event(
-    event: (DVNFeePaid, gadget_sdk::alloy_rpc_types::Log),
-) -> Result<(DVNFeePaid, gadget_sdk::alloy_rpc_types::Log), Error> {
+    event: (DVNFeePaid, alloy_rpc_types::Log),
+) -> Result<(DVNFeePaid, alloy_rpc_types::Log), Error> {
     Ok(event)
 }
 
