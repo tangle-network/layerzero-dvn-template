@@ -19,6 +19,14 @@ sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]
     #[derive(Debug, Serialize, Deserialize)]
+    SendUlnBase,
+    "contracts/out/SendUlnBase.sol/SendUlnBase.json"
+);
+
+sol!(
+    #[allow(missing_docs)]
+    #[sol(rpc)]
+    #[derive(Debug, Serialize, Deserialize)]
     ISendLib,
     "contracts/out/ISendLib.sol/ISendLib.json"
 );
@@ -27,3 +35,8 @@ load_abi!(
     ILAYER_ZERO_ENDPOINT_V2_ABI_STRING,
     "contracts/out/ILayerZeroEndpointV2.sol/ILayerZeroEndpointV2.json"
 );
+
+load_abi!(
+    ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING
+    "contracts/out/SendUlnBase.sol/SendUlnBase.json"
+)

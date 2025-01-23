@@ -1,30 +1,40 @@
+use crate::SendUlnBase::{self, AssignJobCall, DVNFeePaid};
+use crate::{
+    security::{SecurityType, SecurityVerifier, VerificationContext},
+    ILayerZeroDVN::{self, DVNFeePaid},
+    ILayerZeroEndpointV2::{self, PacketSent},
+    ISendLib::Packet,
+    ILAYER_ZERO_ENDPOINT_V2_ABI_STRING, ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING,
+};
 use alloy_primitives::keccak256;
 use alloy_primitives::{Address, Bytes, U256};
 use alloy_sol_types::sol;
 use alloy_sol_types::SolType;
+use gadget_sdk::contexts::{EVMProviderContext, KeystoreContext, TangleClientContext};
+use gadget_sdk::store::LocalDatabase;
 use gadget_sdk::{
-    config::StdGadgetConfiguration,
-    ctx::{KeystoreContext, TangleClientContext},
-    event_listener::evm::contracts::EvmContractEventListener,
-    job, Error,
+    config::StdGadgetConfiguration, event_listener::evm::contracts::EvmContractEventListener, job,
+    Error,
 };
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use tokio::time::{sleep, Duration};
 
-use crate::{
-    security::{SecurityType, SecurityVerifier, VerificationContext},
-    ILayerZeroEndpointV2::{self, PacketSent},
-    ISendLib::Packet,
-    ILAYER_ZERO_ENDPOINT_V2_ABI_STRING,
-};
+/// Stored packet information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct StoredPacket {
+    packet: Packet,
+    options: Bytes,
+    timestamp: u64,
+}
 
-#[derive(Debug, Clone, KeystoreContext, TangleClientContext)]
+#[derive(Debug, Clone, KeystoreContext, TangleClientContext, EVMProviderContext)]
 pub struct DvnContext {
     #[config]
     pub config: StdGadgetConfiguration,
     #[call_id]
     pub call_id: Option<u64>,
+    pub store: LocalDatabase<StoredPacket>,
     pub required_confirmations: u64,
     pub receive_lib: Address,
     pub price_feed: Address,
@@ -33,48 +43,126 @@ pub struct DvnContext {
     pub security_type: SecurityType,
 }
 
+// First job: Listen for and store packets
 #[job(
     id = 0,
     params(packet, options),
-    result(verification_result),
     event_listener(
-        listener = EvmContractEventListener<ILayerZeroEndpointV2::PacketSent>
+        listener = EvmContractEventListener<PacketSent>
         instance = ILayerZeroEndpointV2,
         abi = ILAYER_ZERO_ENDPOINT_V2_ABI_STRING,
-        pre_processor = convert_event_to_inputs,
+        pre_processor = convert_packet_event,
     )
 )]
-pub async fn verify_packet(packet: Packet, options: Bytes, ctx: DvnContext) -> Result<bool, Error> {
-    // 1. Extract verification parameters from packet
-    let message_id = calculate_message_id(&packet, &options)?;
+pub async fn store_packet(packet: Packet, options: Bytes, ctx: DvnContext) -> Result<(), Error> {
+    let stored_packet = StoredPacket {
+        packet,
+        options,
+        timestamp: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_secs(),
+    };
 
-    // 2. Check if already verified
+    // Store using message_id as key
+    let message_id = calculate_message_id(&stored_packet.packet, &stored_packet.options)?;
+    ctx.store
+        .insert(&message_id.to_vec(), &stored_packet)
+        .await?;
+
+    Ok(())
+}
+
+// Second job: Process packets when selected as DVN
+#[job(
+    id = 1,
+    params(fee_paid, log),
+    event_listener(
+        listener = EvmContractEventListener<DVNFeePaid>
+        instance = SendUlnBase,
+        abi = ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING,
+        pre_processor = convert_fee_event,
+    )
+)]
+pub async fn process_packet(
+    fee_paid: DVNFeePaid,
+    log: gadget_sdk::alloy_rpc_types::Log,
+    ctx: DvnContext,
+) -> Result<bool, Error> {
+    // 1. Check if we're one of the selected DVNs
+    let our_address = ctx.config.address;
+    let is_required = fee_paid
+        .requiredDVNs
+        .iter()
+        .any(|addr| *addr == our_address);
+    let is_optional = fee_paid
+        .optionalDVNs
+        .iter()
+        .any(|addr| *addr == our_address);
+
+    if !is_required && !is_optional {
+        return Ok(false);
+    }
+
+    // 2. Get the transaction that emitted this event
+    let tx = ctx
+        .evm_provider()
+        .await?
+        .get_transaction(log.transaction_hash)
+        .await?
+        .ok_or_else(|| Error::Client("Transaction not found".into()))?;
+
+    // 3. Decode the transaction input to get the AssignJob call data
+    let assign_job = AssignJobCall::abi_decode(&tx.input, true)
+        .map_err(|e| Error::Client(format!("Failed to decode transaction input: {}", e)))?;
+
+    // 4. Extract packet parameters from the assign job call
+    let message_id = calculate_message_id_from_params(&assign_job.param)?;
+
+    // 5. Verify this matches the stored packet
+    let stored_packet: StoredPacket = ctx
+        .store
+        .get(&message_id.to_vec())
+        .await?
+        .ok_or_else(|| Error::Client("Packet not found".into()))?;
+
+    // 6. Verify the parameters match
+    verify_packet_params(&stored_packet, &assign_job.param)?;
+
+    // 7. Check if already verified
     if is_already_verified(&message_id, &ctx).await? {
         return Ok(true);
     }
 
-    // 3. Wait for required confirmations
-    wait_for_confirmations(packet.dstEid, ctx.required_confirmations).await?;
+    // 8. Wait for required confirmations
+    wait_for_confirmations(stored_packet.packet.dstEid, ctx.required_confirmations).await?;
 
-    // 4. Perform security verification based on type
-    verify_security(&packet, &options, &ctx).await?;
+    // 9. Perform security verification
+    verify_security(&stored_packet.packet, &stored_packet.options, &ctx).await?;
 
-    // 5. Call contract to verify on ULN
-    let verification_result = verify_on_destination(&packet, &options, ctx.receive_lib).await?;
+    // 10. Call contract to verify on ULN
+    let verification_result = verify_on_destination(
+        &stored_packet.packet,
+        &stored_packet.options,
+        ctx.receive_lib,
+    )
+    .await?;
 
     Ok(verification_result)
 }
 
-async fn convert_event_to_inputs(
+async fn convert_packet_event(
     event: (PacketSent, gadget_sdk::alloy_rpc_types::Log),
 ) -> Result<(Packet, Bytes), Error> {
     let packet_sent = event.0;
-
-    // Decode the packet from the encoded payload
     let packet = Packet::abi_decode(&packet_sent.encodedPayload.to_vec()[..], true)
         .map_err(|e| Error::Client(format!("Failed to decode packet: {}", e)))?;
-
     Ok((packet, packet_sent.options))
+}
+
+async fn convert_fee_event(
+    event: (DVNFeePaid, gadget_sdk::alloy_rpc_types::Log),
+) -> Result<(DVNFeePaid, gadget_sdk::alloy_rpc_types::Log), Error> {
+    Ok(event)
 }
 
 async fn is_already_verified(message_id: &[u8; 32], ctx: &DvnContext) -> Result<bool, Error> {
@@ -208,15 +296,45 @@ fn encode_packet_header(packet: &Packet) -> Result<Bytes, Error> {
     Ok(data.into())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_packet_verification() {
-        // TODO: Add tests for:
-        // 1. Message ID calculation
-        // 2. Packet verification flow
-        // 3. Custom security checks
+fn verify_packet_params(
+    stored_packet: &StoredPacket,
+    assign_params: &AssignJobParam,
+) -> Result<(), Error> {
+    // Verify that the stored packet matches the parameters from the assign job
+    if stored_packet.packet.dstEid != assign_params.dstEid {
+        return Err(Error::Client("Destination EID mismatch".into()));
     }
+
+    let calculated_hash = keccak256(&stored_packet.packet.message);
+    if calculated_hash != assign_params.payloadHash {
+        return Err(Error::Client("Payload hash mismatch".into()));
+    }
+
+    Ok(())
+}
+
+fn calculate_message_id_from_params(params: &AssignJobParam) -> Result<[u8; 32], Error> {
+    // We need to construct a packet header from the params and combine it with the payload hash
+    // Format matches encode_packet_header:
+    // PACKET_VERSION (uint8)
+    // nonce (uint64)
+    // srcEid (uint32)
+    // sender (bytes32)
+    // dstEid (uint32)
+    // receiver (bytes32)
+    let mut header_data = Vec::with_capacity(1 + 8 + 4 + 32 + 4 + 32);
+
+    header_data.push(1u8); // PACKET_VERSION
+    header_data.extend_from_slice(&params.nonce.to_be_bytes());
+    header_data.extend_from_slice(&params.srcEid.to_be_bytes());
+    header_data.extend_from_slice(&params.sender.to_fixed_bytes());
+    header_data.extend_from_slice(&params.dstEid.to_be_bytes());
+    header_data.extend_from_slice(&params.receiver);
+
+    // Combine header with payload hash
+    let mut message_data = Vec::with_capacity(header_data.len() + 32);
+    message_data.extend_from_slice(&header_data);
+    message_data.extend_from_slice(&params.payloadHash);
+
+    Ok(keccak256(&message_data))
 }

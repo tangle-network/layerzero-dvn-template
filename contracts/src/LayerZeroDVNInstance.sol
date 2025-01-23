@@ -18,7 +18,9 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
     event FeeConfigSet(uint32 dstEid, uint256 baseFee);
     event MessageVerified(uint64 nonce, bytes32 payloadHash);
     event HashVerified(uint256 messageId, bytes32 hash);
-    
+    event VerifierFeePaid(uint256 fee);
+
+
     // State variables
     mapping(uint32 => uint256) public baseFees; // dstEid => base fee amount
     mapping(bytes32 => bool) public verifiedMessages; // messageId => verified status
@@ -76,6 +78,7 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
             require(success, "LayerZeroDVNInstance: failed to return excess fee");
         }
 
+        emit VerifierFeePaid(fee);
         return fee;
     }
 
