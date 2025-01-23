@@ -20,10 +20,7 @@ interface IBlueprintServiceManager {
     /// attempts to register with the blueprint.
     /// @param operator The operator's details.
     /// @param registrationInputs Inputs required for registration in bytes format.
-    function onRegister(
-        ServiceOperators.OperatorPreferences calldata operator,
-        bytes calldata registrationInputs
-    )
+    function onRegister(ServiceOperators.OperatorPreferences calldata operator, bytes calldata registrationInputs)
         external
         payable;
 
@@ -48,11 +45,7 @@ interface IBlueprintServiceManager {
     /// @param operator The operator's details.
     /// @param requestId The ID of the request.
     /// @param restakingPercent The percentage of the restaking amount (0-100).
-    function onApprove(
-        ServiceOperators.OperatorPreferences calldata operator,
-        uint64 requestId,
-        uint8 restakingPercent
-    )
+    function onApprove(ServiceOperators.OperatorPreferences calldata operator, uint64 requestId, uint8 restakingPercent)
         external
         payable;
 
@@ -75,8 +68,7 @@ interface IBlueprintServiceManager {
         address owner,
         address[] calldata permittedCallers,
         uint64 ttl
-    )
-        external;
+    ) external;
 
     /// @dev Hook for job calls on the service. Called when a job is called within
     /// the service context.
@@ -101,9 +93,7 @@ interface IBlueprintServiceManager {
         ServiceOperators.OperatorPreferences calldata operator,
         bytes calldata inputs,
         bytes calldata outputs
-    )
-        external
-        payable;
+    ) external payable;
 
     /// @dev Hook for service termination. Called when a service is terminated.
     /// @param serviceId The ID of the service to be terminated.
@@ -116,12 +106,7 @@ interface IBlueprintServiceManager {
     /// @param offender The offender's details in bytes format.
     /// @param slashPercent The percentage of the slash.
     /// @param totalPayout The total payout amount in wei.
-    function onUnappliedSlash(
-        uint64 serviceId,
-        bytes calldata offender,
-        uint8 slashPercent,
-        uint256 totalPayout
-    )
+    function onUnappliedSlash(uint64 serviceId, bytes calldata offender, uint8 slashPercent, uint256 totalPayout)
         external;
 
     /// @dev Hook for handling applied slashes. Called when a slash is applied to an offender.
@@ -164,10 +149,7 @@ interface IBlueprintServiceManager {
     /// @param serviceId The ID of the service to check against.
     /// @param asset The asset to verify for allowance.
     /// @return isAllowed Returns true if the asset is allowed, false otherwise.
-    function queryIsPaymentAssetAllowed(
-        uint64 serviceId,
-        Assets.Asset calldata asset
-    )
+    function queryIsPaymentAssetAllowed(uint64 serviceId, Assets.Asset calldata asset)
         external
         view
         returns (bool isAllowed);

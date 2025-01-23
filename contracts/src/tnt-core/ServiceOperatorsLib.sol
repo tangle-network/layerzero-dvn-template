@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import { Assets } from "./AssetsLib.sol";
+import {Assets} from "./AssetsLib.sol";
 
 /// @title Service Operators Library
 /// @author Tangle Network Team

@@ -20,12 +20,11 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
     event HashVerified(uint256 messageId, bytes32 hash);
     event VerifierFeePaid(uint256 fee);
 
-
     // State variables
     mapping(uint32 => uint256) public baseFees; // dstEid => base fee amount
     mapping(bytes32 => bool) public verifiedMessages; // messageId => verified status
     IDVNFeeLib public feeLib;
-    
+
     // Errors
     error MessageAlreadyVerified();
     error InvalidMessageHash();
@@ -42,21 +41,20 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
 
     mapping(uint32 => DstConfig) public dstConfig;
 
-    constructor(
-        address _owner,
-        address[] memory _admins,
-        address payable _feeLib
-    ) DVNAdapterBase(_owner, _admins, 0) {
+    constructor(address _owner, address[] memory _admins, address payable _feeLib) DVNAdapterBase(_owner, _admins, 0) {
         feeLib = IDVNFeeLib(_feeLib);
     }
 
     /**
      * @notice Called by LayerZero endpoint when a new verification job is assigned
      */
-    function assignJob(
-        AssignJobParam calldata _param,
-        bytes calldata _options
-    ) external payable override onlyAcl(_param.sender) returns (uint256 fee) {
+    function assignJob(AssignJobParam calldata _param, bytes calldata _options)
+        external
+        payable
+        override
+        onlyAcl(_param.sender)
+        returns (uint256 fee)
+    {
         // Get the receive library for the destination chain
         bytes32 receiveLib = _getAndAssertReceiveLib(msg.sender, _param.dstEid);
 
@@ -65,16 +63,11 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
         require(msg.value >= fee, "LayerZeroDVNInstance: insufficient fee");
 
         // Emit event for off-chain DVN to pick up the job
-        emit JobAssigned(
-            _param.dstEid,
-            _param.payloadHash,
-            _param.confirmations,
-            _param.sender
-        );
+        emit JobAssigned(_param.dstEid, _param.payloadHash, _param.confirmations, _param.sender);
 
         // Return excess fee
         if (msg.value > fee) {
-            (bool success, ) = msg.sender.call{value: msg.value - fee}("");
+            (bool success,) = msg.sender.call{value: msg.value - fee}("");
             require(success, "LayerZeroDVNInstance: failed to return excess fee");
         }
 
@@ -85,29 +78,21 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
     /**
      * @notice Verify a message from the off-chain DVN
      */
-    function verifyMessageHash(
-        bytes32 messageId,
-        bytes calldata message
-    ) external onlyRole(ADMIN_ROLE) returns (uint256) {
+    function verifyMessageHash(bytes32 messageId, bytes calldata message)
+        external
+        onlyRole(ADMIN_ROLE)
+        returns (uint256)
+    {
         // Check if message was already verified
         if (verifiedMessages[messageId]) {
             revert MessageAlreadyVerified();
         }
 
         // Decode the message using DVNAdapterMessageCodec
-        (
-            address receiveLib,
-            bytes memory packetHeader,
-            bytes32 payloadHash
-        ) = DVNAdapterMessageCodec.decode(message);
+        (address receiveLib, bytes memory packetHeader, bytes32 payloadHash) = DVNAdapterMessageCodec.decode(message);
 
         // Decode packet header to get source and destination info
-        (
-            uint64 nonce,
-            uint32 srcEid,
-            uint32 dstEid,
-            bytes32 receiver
-        ) = _decodePacketHeader(packetHeader);
+        (uint64 nonce, uint32 srcEid, uint32 dstEid, bytes32 receiver) = _decodePacketHeader(packetHeader);
 
         // TODO: Add custom verification logic here before allowing ULN verification
         // This is where we can add:
@@ -126,7 +111,7 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
 
         // Mark message as verified
         verifiedMessages[messageId] = true;
-        
+
         emit MessageVerified(nonce, payloadHash);
         emit HashVerified(uint256(messageId), payloadHash);
 
@@ -136,12 +121,12 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
     /**
      * @notice Get the fee for verifying a packet
      */
-    function getFee(
-        uint32 _dstEid,
-        uint64 _confirmations,
-        address _sender,
-        bytes calldata _options
-    ) public view override returns (uint256 fee) {
+    function getFee(uint32 _dstEid, uint64 _confirmations, address _sender, bytes calldata _options)
+        public
+        view
+        override
+        returns (uint256 fee)
+    {
         uint256 baseFee = baseFees[_dstEid];
 
         IDVNFeeLib.FeeParams memory params = IDVNFeeLib.FeeParams({
@@ -166,19 +151,16 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
     /**
      * @notice Decode packet header according to LayerZero format
      */
-    function _decodePacketHeader(
-        bytes memory packetHeader
-    ) internal pure returns (
-        uint64 nonce,
-        uint32 srcEid,
-        uint32 dstEid,
-        bytes32 receiver
-    ) {
+    function _decodePacketHeader(bytes memory packetHeader)
+        internal
+        pure
+        returns (uint64 nonce, uint32 srcEid, uint32 dstEid, bytes32 receiver)
+    {
         assembly {
-            nonce := mload(add(packetHeader, 9))     // 8 + 64
-            srcEid := mload(add(packetHeader, 13))   // 8 + 64 + 32
-            dstEid := mload(add(packetHeader, 49))   // 8 + 64 + 32 + 256 + 32
-            receiver := mload(add(packetHeader, 81))  // 8 + 64 + 32 + 256 + 32 + 256
+            nonce := mload(add(packetHeader, 9)) // 8 + 64
+            srcEid := mload(add(packetHeader, 13)) // 8 + 64 + 32
+            dstEid := mload(add(packetHeader, 49)) // 8 + 64 + 32 + 256 + 32
+            receiver := mload(add(packetHeader, 81)) // 8 + 64 + 32 + 256 + 32 + 256
         }
     }
 
@@ -188,17 +170,11 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
         emit FeeConfigSet(_dstEid, _baseFee);
     }
 
-    function setDstConfig(
-        uint32 _dstEid,
-        uint64 _gas,
-        uint16 _multiplierBps,
-        uint128 _floorMarginUSD
-    ) external onlyRole(ADMIN_ROLE) {
-        dstConfig[_dstEid] = DstConfig({
-            gas: _gas,
-            multiplierBps: _multiplierBps,
-            floorMarginUSD: _floorMarginUSD
-        });
+    function setDstConfig(uint32 _dstEid, uint64 _gas, uint16 _multiplierBps, uint128 _floorMarginUSD)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        dstConfig[_dstEid] = DstConfig({gas: _gas, multiplierBps: _multiplierBps, floorMarginUSD: _floorMarginUSD});
     }
 
     function setFeeLib(address payable _feeLib) external onlyRole(ADMIN_ROLE) {
@@ -208,7 +184,7 @@ contract LayerZeroDVNInstance is DVNAdapterBase {
 
     function withdraw(address _to, uint256 _amount) external onlyRole(ADMIN_ROLE) {
         require(_to != address(0), "LayerZeroDVNInstance: invalid recipient");
-        (bool success, ) = _to.call{value: _amount}("");
+        (bool success,) = _to.call{value: _amount}("");
         require(success, "LayerZeroDVNInstance: withdrawal failed");
     }
 }
