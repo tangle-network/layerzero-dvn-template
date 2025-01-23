@@ -42,7 +42,7 @@
             "Testing": {
               "cargo_package": "layerzero-dvn-blueprint-template",
               "cargo_bin": "main",
-              "base_path": "/Users/drew/webb/layerzero-dvn-template"
+              "base_path": "/Users/drew/webb/layerzero-dvn-blueprint-template"
             }
           }
         }

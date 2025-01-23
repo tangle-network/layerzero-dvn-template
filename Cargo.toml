@@ -36,12 +36,12 @@ alloy-transport-http = { version = "0.1" }
 serde = "1.0.213"
 
 [dependencies.gadget-sdk]
-version = "0.3"
+version = "0.6.2"
 default-features = false
 features = ["std", "getrandom"]
 
 [build-dependencies]
-blueprint-metadata = "0.1.6"
+blueprint-metadata = "0.2.0"
 
 [lib]
 path = "src/lib.rs"
