@@ -1,28 +1,32 @@
-use crate::SendUln302::{self, DVNFeePaid};
+use crate::ILayerZeroDVN::AssignJobParam;
+use crate::SendUlnBase::{self, DVNFeePaid};
 use crate::{
     security::{SecurityType, SecurityVerifier, VerificationContext},
-    ILayerZeroDVN::{self, DVNFeePaid},
+    ILayerZeroDVN,
     ILayerZeroEndpointV2::{self, PacketSent},
     ISendLib::Packet,
     ILAYER_ZERO_ENDPOINT_V2_ABI_STRING, ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING,
 };
-use alloy_primitives::keccak256;
-use alloy_primitives::{Address, Bytes, U256};
-use alloy_sol_types::sol;
-use alloy_sol_types::SolType;
-use blueprint_sdk::macros::contexts::{EVMProviderContext, KeystoreContext, TangleClientContext};
-use blueprint_sdk::config::GadgetConfiguration;
-use blueprint_sdk::event_listeners::evm::EvmContractEventListener;
-use blueprint_sdk::job;
-use blueprint_sdk::tokio;
+use blueprint_sdk::alloy::hex;
+use blueprint_sdk::alloy::primitives::keccak256;
+use blueprint_sdk::alloy::primitives::{Address, Bytes, U256};
 use blueprint_sdk::alloy::rpc::types as alloy_rpc_types;
+use blueprint_sdk::alloy::sol_types::sol;
+use blueprint_sdk::alloy::sol_types::SolType;
+use blueprint_sdk::config::GadgetConfiguration;
+use blueprint_sdk::contexts::instrumented_evm_client::EvmInstrumentedClientContext;
+use blueprint_sdk::error::Error;
+use blueprint_sdk::event_listeners::evm::EvmContractEventListener;
+use blueprint_sdk::macros::contexts::{EVMProviderContext, KeystoreContext, TangleClientContext};
+use blueprint_sdk::stores::local_database::LocalDatabase;
+use blueprint_sdk::tokio;
+use blueprint_sdk::{event_listeners, job};
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
-use blueprint_sdk::stores::local_database::LocalDatabase;
 use tokio::time::{sleep, Duration};
 
 /// Stored packet information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 struct StoredPacket {
     packet: Packet,
     options: Bytes,
@@ -60,15 +64,14 @@ pub async fn store_packet(packet: Packet, options: Bytes, ctx: DvnContext) -> Re
         packet,
         options,
         timestamp: std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)?
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| Error::Other(e.to_string()))?
             .as_secs(),
     };
 
     // Store using message_id as key
     let message_id = calculate_message_id(&stored_packet.packet, &stored_packet.options)?;
-    ctx.store
-        .insert(&message_id.to_vec(), &stored_packet)
-        .await?;
+    ctx.store.set(&*hex::encode(message_id), stored_packet);
 
     Ok(())
 }
@@ -79,7 +82,7 @@ pub async fn store_packet(packet: Packet, options: Bytes, ctx: DvnContext) -> Re
     params(fee_paid, log),
     event_listener(
         listener = EvmContractEventListener<DVNFeePaid>
-        instance = SendUln302,
+        instance = SendUlnBase,
         abi = ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING,
         pre_processor = convert_fee_event,
     )
@@ -106,15 +109,15 @@ pub async fn process_packet(
 
     // 2. Get the transaction that emitted this event
     let tx = ctx
-        .evm_provider()
-        .await?
+        .evm_client()
+        .await
         .get_transaction(log.transaction_hash)
         .await?
-        .ok_or_else(|| Error::Client("Transaction not found".into()))?;
+        .ok_or_else(|| Error::Other("Transaction not found".into()))?;
 
     // 3. Decode the transaction input to get the AssignJob call data
     let assign_job = AssignJobCall::abi_decode(&tx.input, true)
-        .map_err(|e| Error::Client(format!("Failed to decode transaction input: {}", e)))?;
+        .map_err(|e| Error::Other(format!("Failed to decode transaction input: {}", e)))?;
 
     // 4. Extract packet parameters from the assign job call
     let message_id = calculate_message_id_from_params(&assign_job.param)?;
@@ -123,8 +126,7 @@ pub async fn process_packet(
     let stored_packet: StoredPacket = ctx
         .store
         .get(&message_id.to_vec())
-        .await?
-        .ok_or_else(|| Error::Client("Packet not found".into()))?;
+        .ok_or_else(|| Error::Other("Packet not found".into()))?;
 
     // 6. Verify the parameters match
     verify_packet_params(&stored_packet, &assign_job.param)?;
@@ -153,17 +155,23 @@ pub async fn process_packet(
 
 async fn convert_packet_event(
     event: (PacketSent, alloy_rpc_types::Log),
-) -> Result<(Packet, Bytes), Error> {
+) -> Result<Option<(Packet, Bytes)>, event_listeners::core::Error<event_listeners::evm::error::Error>>
+{
     let packet_sent = event.0;
-    let packet = Packet::abi_decode(&packet_sent.encodedPayload.to_vec()[..], true)
-        .map_err(|e| Error::Client(format!("Failed to decode packet: {}", e)))?;
-    Ok((packet, packet_sent.options))
+    let packet =
+        Packet::abi_decode(&packet_sent.encodedPayload.to_vec()[..], true).map_err(|e| {
+            event_listeners::core::Error::Other(format!("Failed to decode packet: {}", e))
+        })?;
+    Ok(Some((packet, packet_sent.options)))
 }
 
 async fn convert_fee_event(
     event: (DVNFeePaid, alloy_rpc_types::Log),
-) -> Result<(DVNFeePaid, alloy_rpc_types::Log), Error> {
-    Ok(event)
+) -> Result<
+    Option<(DVNFeePaid, alloy_rpc_types::Log)>,
+    event_listeners::core::Error<event_listeners::evm::error::Error>,
+> {
+    Ok(Some(event))
 }
 
 async fn is_already_verified(message_id: &[u8; 32], ctx: &DvnContext) -> Result<bool, Error> {
@@ -187,7 +195,7 @@ async fn wait_for_confirmations(dst_eid: u32, required_confirmations: u64) -> Re
 
         current_attempt += 1;
         if current_attempt >= max_attempts {
-            return Err(Error::Client("Max confirmation attempts exceeded".into()));
+            return Err(Error::Other("Max confirmation attempts exceeded".into()));
         }
 
         // Exponential backoff
@@ -242,7 +250,7 @@ async fn verify_security(packet: &Packet, options: &Bytes, ctx: &DvnContext) -> 
     };
 
     if !verified {
-        return Err(Error::Client("Security verification failed".into()));
+        return Err(Error::Other("Security verification failed".into()));
     }
 
     Ok(())
@@ -272,9 +280,9 @@ fn calculate_message_id(packet: &Packet, options: &Bytes) -> Result<[u8; 32], Er
     // Calculate message ID: keccak256(abi.encodePacked(packet_header, payload_hash))
     let mut message_data = Vec::with_capacity(packet_header.len() + 32);
     message_data.extend_from_slice(&packet_header);
-    message_data.extend_from_slice(&payload_hash);
+    message_data.extend_from_slice(&*payload_hash);
 
-    Ok(keccak256(&message_data))
+    Ok(*keccak256(&message_data))
 }
 
 fn encode_packet_header(packet: &Packet) -> Result<Bytes, Error> {
@@ -290,9 +298,9 @@ fn encode_packet_header(packet: &Packet) -> Result<Bytes, Error> {
     data.push(1u8); // PACKET_VERSION
     data.extend_from_slice(&packet.nonce.to_be_bytes());
     data.extend_from_slice(&packet.srcEid.to_be_bytes());
-    data.extend_from_slice(&packet.sender.to_fixed_bytes());
+    data.extend_from_slice(&packet.sender.to_vec());
     data.extend_from_slice(&packet.dstEid.to_be_bytes());
-    data.extend_from_slice(&packet.receiver);
+    data.extend_from_slice(&*packet.receiver);
 
     Ok(data.into())
 }
@@ -303,12 +311,12 @@ fn verify_packet_params(
 ) -> Result<(), Error> {
     // Verify that the stored packet matches the parameters from the assign job
     if stored_packet.packet.dstEid != assign_params.dstEid {
-        return Err(Error::Client("Destination EID mismatch".into()));
+        return Err(Error::Other("Destination EID mismatch".into()));
     }
 
     let calculated_hash = keccak256(&stored_packet.packet.message);
     if calculated_hash != assign_params.payloadHash {
-        return Err(Error::Client("Payload hash mismatch".into()));
+        return Err(Error::Other("Payload hash mismatch".into()));
     }
 
     Ok(())
@@ -328,7 +336,7 @@ fn calculate_message_id_from_params(params: &AssignJobParam) -> Result<[u8; 32],
     header_data.push(1u8); // PACKET_VERSION
     header_data.extend_from_slice(&params.nonce.to_be_bytes());
     header_data.extend_from_slice(&params.srcEid.to_be_bytes());
-    header_data.extend_from_slice(&params.sender.to_fixed_bytes());
+    header_data.extend_from_slice(&params.sender.to_vec());
     header_data.extend_from_slice(&params.dstEid.to_be_bytes());
     header_data.extend_from_slice(&params.receiver);
 
@@ -337,5 +345,5 @@ fn calculate_message_id_from_params(params: &AssignJobParam) -> Result<[u8; 32],
     message_data.extend_from_slice(&header_data);
     message_data.extend_from_slice(&params.payloadHash);
 
-    Ok(keccak256(&message_data))
+    Ok(*keccak256(&message_data))
 }

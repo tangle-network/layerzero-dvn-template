@@ -16,7 +16,7 @@ remappings_version = false
 [dependencies]
 tnt-core = "0.1.0"
 forge-std = "1.9.5"
-"@openzeppelin-contracts" = "5.1.0"
+"@openzeppelin-contracts" = "4.8.1"
 "@openzeppelin-contracts-upgradeable" = "4.8.1"
 "@layerzerolabs-lz-evm-messagelib-v2" = "3.0.50"
 "@layerzerolabs-lz-evm-protocol-v2" = "3.0.50"

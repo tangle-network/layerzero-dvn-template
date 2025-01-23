@@ -1,8 +1,7 @@
+use blueprint_sdk::runners::core::runner::BlueprintRunner;
 use color_eyre::Result;
-use gadget_sdk as sdk;
-use gadget_sdk::runners::BlueprintRunner;
 
-#[sdk::main(env)]
+#[blueprint_sdk::main(env)]
 async fn main() -> Result<()> {
     let signer = env.first_sr25519_signer()?;
     let client = env.client().await?;

@@ -1,7 +1,7 @@
 use super::{SecurityVerifier, VerificationContext};
-use alloy_primitives::{keccak256, Address};
 use async_trait::async_trait;
-use gadget_sdk::Error;
+use blueprint_sdk::alloy::primitives::{keccak256, Address};
+use blueprint_sdk::error::Error;
 use serde::{Deserialize, Serialize};
 
 /// Oracle verification implementation
@@ -41,7 +41,7 @@ impl OracleVerifier {
         // 2. Verify the timestamp is recent enough
         let current_time = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|e| Error::Client(format!("Time error: {}", e)))?
+            .map_err(|e| Error::Other(format!("Time error: {}", e)))?
             .as_secs();
 
         if current_time - response.timestamp > 3600 {
@@ -68,7 +68,7 @@ impl SecurityVerifier for OracleVerifier {
 
         // Decode oracle responses from context.extra_data
         let responses: Vec<OracleResponse> = serde_json::from_slice(&context.extra_data)
-            .map_err(|e| Error::Client(format!("Failed to decode oracle responses: {}", e)))?;
+            .map_err(|e| Error::Other(format!("Failed to decode oracle responses: {}", e)))?;
 
         for response in responses {
             if self.verify_oracle_response(&response, data)? {

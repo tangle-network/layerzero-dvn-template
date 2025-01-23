@@ -8,14 +8,22 @@ mod security;
 pub use job::*;
 
 sol!(
-    #[allow(missing_docs)]
+    #![sol(
+        alloy_sol_types = blueprint_sdk::alloy::sol_types,
+        alloy_contract = blueprint_sdk::alloy::contract
+    )]
     #[sol(rpc)]
+    #[allow(missing_docs)]
     #[derive(Debug, Serialize, Deserialize)]
     ILayerZeroEndpointV2,
     "contracts/out/ILayerZeroEndpointV2.sol/ILayerZeroEndpointV2.json"
 );
 
 sol!(
+    #![sol(
+        alloy_sol_types = blueprint_sdk::alloy::sol_types,
+        alloy_contract = blueprint_sdk::alloy::contract
+    )]
     #[allow(missing_docs)]
     #[sol(rpc)]
     #[derive(Debug, Serialize, Deserialize)]
@@ -24,11 +32,27 @@ sol!(
 );
 
 sol!(
+    #![sol(
+        alloy_sol_types = blueprint_sdk::alloy::sol_types,
+        alloy_contract = blueprint_sdk::alloy::contract
+    )]
+    #[allow(missing_docs)]
+    #[sol(rpc)]
+    #[derive(Default, Debug, Serialize, Deserialize)]
+    ISendLib,
+    "contracts/out/ISendLib.sol/ISendLib.json"
+);
+
+sol!(
+    #![sol(
+        alloy_sol_types = blueprint_sdk::alloy::sol_types,
+        alloy_contract = blueprint_sdk::alloy::contract
+    )]
     #[allow(missing_docs)]
     #[sol(rpc)]
     #[derive(Debug, Serialize, Deserialize)]
-    ISendLib,
-    "contracts/out/ISendLib.sol/ISendLib.json"
+    ILayerZeroDVN,
+    "contracts/out/ILayerZeroDVN.sol/ILayerZeroDVN.json"
 );
 
 load_abi!(
@@ -37,6 +61,6 @@ load_abi!(
 );
 
 load_abi!(
-    ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING
+    ILAYER_ZERO_SEND_ULN_BASE_ABI_STRING,
     "contracts/out/SendUln302.sol/SendUln302.json"
 );
