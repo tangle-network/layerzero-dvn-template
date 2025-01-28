@@ -95,6 +95,7 @@ impl SecurityVerifier for MpcVerifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use blueprint_sdk::tokio;
 
     #[tokio::test]
     async fn test_mpc_verification() {

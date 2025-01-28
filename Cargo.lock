@@ -2307,6 +2307,7 @@ dependencies = [
  "rustdoc-types",
  "serde",
  "serde_json",
+ "thiserror 2.0.11",
  "typed-builder",
 ]
 
@@ -2318,10 +2319,12 @@ dependencies = [
  "alloy-json-abi",
  "blueprint-build-utils",
  "blueprint-metadata",
+ "gadget-clients",
  "gadget-config",
  "gadget-context-derive",
  "gadget-contexts",
  "gadget-crypto",
+ "gadget-crypto-tangle-pair-signer",
  "gadget-event-listeners",
  "gadget-keystore",
  "gadget-logging",
@@ -2333,6 +2336,7 @@ dependencies = [
  "gadget-utils",
  "serde",
  "tangle-subxt",
+ "tempfile",
  "thiserror 2.0.11",
  "tokio",
 ]

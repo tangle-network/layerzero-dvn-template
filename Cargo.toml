@@ -22,9 +22,16 @@ serde_json = "1.0.135"
 [build-dependencies]
 blueprint-sdk = { path = "../gadget/crates/sdk", features = ["build"] }
 
+[dev-dependencies]
+blueprint-sdk = { path = "../gadget/crates/sdk", features = ["testing", "tangle", "evm"] }
+
 [lib]
 path = "src/lib.rs"
 
 [[bin]]
 name = "layerzero-dvn-blueprint-template"
 path = "src/main.rs"
+
+[package.metadata.blueprint]
+manager = { Evm = "LayerZeroDVNBlueprint" }
+master_revision = "Latest"
