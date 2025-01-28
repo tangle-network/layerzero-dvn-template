@@ -10,9 +10,10 @@ pub use oracle::OracleVerifier;
 pub use signature::SignatureVerifier;
 pub use zk_proof::ZkProofVerifier;
 
-use alloy_primitives::{Address, Bytes};
 use async_trait::async_trait;
-use gadget_sdk::Error;
+use blueprint_sdk::alloy::primitives::{Address, Bytes};
+use blueprint_sdk::error::Error;
+use serde::{Deserialize, Serialize};
 
 /// Type of security verification this DVN performs
 #[derive(Debug, Clone, Serialize, Deserialize)]

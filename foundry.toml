@@ -8,15 +8,17 @@ broadcast = "contracts/broadcast"
 libs = ["dependencies"]
 solc_version = "0.8.20"
 
-remappings = [
-    "@layerzerolabs/lz-evm-messagelib-v2/=node_modules/@layerzerolabs/lz-evm-messagelib-v2/",
-    "@layerzerolabs/lz-evm-protocol-v2/=node_modules/@layerzerolabs/lz-evm-protocol-v2/",
-    "@layerzerolabs/lz-evm-v1-0.7/=node_modules/@layerzerolabs/lz-evm-v1-0.7/",
-    "@openzeppelin/=node_modules/@openzeppelin/",
-    "core/=dependencies/tnt-core-0.1.0/src/",
-    "forge-std/=dependencies/forge-std-1.9.5/src/",
-    "solidity-bytes-utils=node_modules/solidity-bytes-utils/",
-]
+[soldeer]
+recursive_deps = true
+remappings_location = "txt"
+remappings_version = false
 
 [dependencies]
+tnt-core = "0.1.0"
 forge-std = "1.9.5"
+"@openzeppelin-contracts" = "4.8.1"
+"@openzeppelin-contracts-upgradeable" = "4.8.1"
+"@layerzerolabs-lz-evm-messagelib-v2" = "3.0.50"
+"@layerzerolabs-lz-evm-protocol-v2" = "3.0.50"
+"@layerzerolabs-lz-evm-v1-0-7" = "3.0.50"
+solidity-bytes-utils = { version = "0.8.2", git = "https://github.com/GNSPS/solidity-bytes-utils.git", tag = "v0.8.2" }

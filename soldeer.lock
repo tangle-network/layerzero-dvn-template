@@ -1,6 +1,54 @@
 [[dependencies]]
+name = "@layerzerolabs-lz-evm-messagelib-v2"
+version = "3.0.50"
+url = "https://soldeer-revisions.s3.amazonaws.com/@layerzerolabs-lz-evm-messagelib-v2/3_0_50_23-01-2025_13:19:12_lz-evm-messagelib-v2.zip"
+checksum = "a46a312e85e91a64ec540b64316ab11dc2c50f47f0fbe0076864a4ab74401c74"
+integrity = "fabad03fc3dfaa6eb32532897ab544d35f1af37a850bbd8662a625e00b2f5c4a"
+
+[[dependencies]]
+name = "@layerzerolabs-lz-evm-protocol-v2"
+version = "3.0.50"
+url = "https://soldeer-revisions.s3.amazonaws.com/@layerzerolabs-lz-evm-protocol-v2/3_0_50_23-01-2025_13:19:21_lz-evm-protocol-v2.zip"
+checksum = "f251a1ce5115f7825888b18a1168a4eb6cb1bd6629d6f3cd1837c3380d0d26e7"
+integrity = "f1726ed159374fe721213a17acb99025332bc9a3e07cf1de59937650c954571f"
+
+[[dependencies]]
+name = "@layerzerolabs-lz-evm-v1-0-7"
+version = "3.0.50"
+url = "https://soldeer-revisions.s3.amazonaws.com/@layerzerolabs-lz-evm-v1-0-7/3_0_50_23-01-2025_13:19:30_lz-evm-v1-0.zip"
+checksum = "0c4a2954d6c5b6ff1921d737e5ac499f5a596cbba28d61ffbab712e40bc59a1b"
+integrity = "4ede60259b60f897feba09b7af55ef8d2da330fba78e868889eeb28f070a3f99"
+
+[[dependencies]]
+name = "@openzeppelin-contracts"
+version = "4.8.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/4_8_1_22-01-2024_13:13:42_contracts.zip"
+checksum = "5b7477720c0d57c8f99dc25918a60a3e71c4a2e26dae887c91df434d9cc61954"
+integrity = "def305a3d441fafaccdd37eb94fd45a5cc94e053cc022657fe2b299c576c5291"
+
+[[dependencies]]
+name = "@openzeppelin-contracts-upgradeable"
+version = "4.8.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/4_8_1_22-01-2024_13:14:56_contracts-upgradeable.zip"
+checksum = "b1e7b9311fcbec4f3943f1a09ac6381bb9726c7234d61b523dfb771ef1f03c13"
+integrity = "71fc434ed65deab33abaca25492a5df12a22e501f3c8f7b39d25e6a60f4bcfd9"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.9.5"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_5_21-12-2024_15:04:05_forge-std-1.9.zip"
 checksum = "57ada736f383289db77fac4472d48f820e7c98172cf9b01681b0c37065ce043f"
 integrity = "4753ffdfa0dde40878372b6a4d8e8fd1648b190b33996896c8b92f6f1680850f"
+
+[[dependencies]]
+name = "solidity-bytes-utils"
+version = "0.8.2"
+git = "https://github.com/GNSPS/solidity-bytes-utils.git"
+rev = "e0115c4d231910df47ce3b60625ce562fe4af985"
+
+[[dependencies]]
+name = "tnt-core"
+version = "0.1.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/tnt-core/0_1_0_10-12-2024_20:51:20_tnt-core.zip"
+checksum = "628b2475c4d629c1cb2578b41b2e10daa3711d711aa5f5b0dd6153959808620f"
+integrity = "c380cd3e1def40cd40d70db357afdca4efba79d2561f850f05f395dc634a774e"

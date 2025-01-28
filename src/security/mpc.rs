@@ -1,7 +1,8 @@
 use super::{SecurityVerifier, VerificationContext};
-use alloy_primitives::{keccak256, Address};
 use async_trait::async_trait;
-use gadget_sdk::Error;
+use blueprint_sdk::alloy::primitives::{keccak256, Address};
+use blueprint_sdk::error::Error;
+use blueprint_sdk::event_listeners;
 use serde::{Deserialize, Serialize};
 
 /// Multi-Party Computation verification implementation
@@ -85,7 +86,7 @@ impl SecurityVerifier for MpcVerifier {
     async fn verify(&self, data: &[u8], context: &VerificationContext) -> Result<bool, Error> {
         // Decode MPC proof from context.extra_data
         let proof: MpcProof = serde_json::from_slice(&context.extra_data)
-            .map_err(|e| Error::Client(format!("Failed to decode MPC proof: {}", e)))?;
+            .map_err(|e| Error::Other(format!("Failed to decode MPC proof: {}", e)))?;
 
         self.verify_computation(&proof, data)
     }
@@ -94,6 +95,7 @@ impl SecurityVerifier for MpcVerifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use blueprint_sdk::tokio;
 
     #[tokio::test]
     async fn test_mpc_verification() {

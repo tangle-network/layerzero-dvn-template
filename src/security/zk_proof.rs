@@ -1,7 +1,8 @@
 use super::{SecurityVerifier, VerificationContext};
-use alloy_primitives::Bytes;
 use async_trait::async_trait;
-use gadget_sdk::Error;
+use blueprint_sdk::alloy::primitives::Bytes;
+use blueprint_sdk::error::Error;
+use blueprint_sdk::event_listeners;
 
 /// Generic ZK proof verification implementation
 /// This is a basic structure that can be extended for specific ZK proof systems
@@ -25,7 +26,7 @@ impl ZkProofVerifier {
         match self.proof_system.as_str() {
             "groth16" => self.verify_groth16(proof, public_inputs),
             "plonk" => self.verify_plonk(proof, public_inputs),
-            _ => Err(Error::Client(format!(
+            _ => Err(Error::Other(format!(
                 "Unsupported proof system: {}",
                 self.proof_system
             ))),
@@ -50,12 +51,10 @@ impl SecurityVerifier for ZkProofVerifier {
         // Extract proof and public inputs from context.extra_data
         // Format: [proof_len (4 bytes) || proof || public_inputs]
         if context.extra_data.len() < 4 {
-            return Err(Error::Client("Invalid proof data format".into()));
+            return Err(Error::Other("Invalid proof data format".into()).into());
         }
 
-        let proof_len = u32::from_be_bytes(context.extra_data[..4].try_into()?)
-            .try_into()
-            .map_err(|e| Error::Client(format!("Invalid proof length: {}", e)))?;
+        let proof_len = u32::from_be_bytes(context.extra_data[..4].try_into().unwrap()) as usize;
 
         let proof = &context.extra_data[4..4 + proof_len];
         let public_inputs = &context.extra_data[4 + proof_len..];

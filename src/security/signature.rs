@@ -1,7 +1,9 @@
 use super::{SecurityVerifier, VerificationContext};
-use alloy_primitives::{keccak256, Address, Bytes};
 use async_trait::async_trait;
-use gadget_sdk::Error;
+use blueprint_sdk::alloy::primitives::{keccak256, Address, Bytes};
+use blueprint_sdk::alloy::signers::k256;
+use blueprint_sdk::error::Error;
+use blueprint_sdk::event_listeners;
 use k256::{
     ecdsa::{RecoveryId, Signature, VerifyingKey},
     elliptic_curve::sec1::ToEncodedPoint,
@@ -27,13 +29,13 @@ impl SignatureVerifier {
         recovery_id: u8,
     ) -> Result<Address, Error> {
         let sig = Signature::from_slice(signature)
-            .map_err(|e| Error::Client(format!("Invalid signature: {}", e)))?;
+            .map_err(|e| Error::Other(format!("Invalid signature: {}", e)))?;
 
         let recovery_id = RecoveryId::from_byte(recovery_id)
-            .ok_or_else(|| Error::Client("Invalid recovery ID".into()))?;
+            .ok_or_else(|| Error::Other("Invalid recovery ID".into()))?;
 
         let verifying_key = VerifyingKey::recover_from_prehash(&message_hash, &sig, recovery_id)
-            .map_err(|e| Error::Client(format!("Signature recovery failed: {}", e)))?;
+            .map_err(|e| Error::Other(format!("Signature recovery failed: {}", e)))?;
 
         let public_key = verifying_key.to_encoded_point(false);
         let public_key_bytes = public_key.as_bytes();
@@ -57,7 +59,7 @@ impl SecurityVerifier for SignatureVerifier {
             let signature = &signature_data[..65];
             let recovery_id = signature_data[65];
 
-            let signer = Self::recover_signer(message_hash, signature, recovery_id)?;
+            let signer = Self::recover_signer(*message_hash, signature, recovery_id)?;
 
             if self.required_signers.contains(&signer) {
                 valid_signatures += 1;

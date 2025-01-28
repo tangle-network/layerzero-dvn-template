@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: LZBL-1.2
 pragma solidity ^0.8.20;
 
-import "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/interfaces/ILayerZeroDVN.sol";
-import "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/interfaces/IDVNFeeLib.sol";
-import "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/DVNFeeLib.sol";
-import "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/adapters/DVNAdapterBase.sol";
-import "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/adapters/libs/DVNAdapterMessageCodec.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@layerzerolabs-lz-evm-messagelib-v2/contracts/uln/interfaces/ILayerZeroDVN.sol";
+import "@layerzerolabs-lz-evm-messagelib-v2/contracts/uln/interfaces/IDVNFeeLib.sol";
+import "@layerzerolabs-lz-evm-messagelib-v2/contracts/uln/dvn/DVNFeeLib.sol";
+import "@layerzerolabs-lz-evm-messagelib-v2/contracts/uln/dvn/adapters/DVNAdapterBase.sol";
+import "@layerzerolabs-lz-evm-messagelib-v2/contracts/uln/dvn/adapters/libs/DVNAdapterMessageCodec.sol";
+import "@openzeppelin-contracts/access/Ownable.sol";
 
 /**
  * @title LayerZeroDVNInstance
